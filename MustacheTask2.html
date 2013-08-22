@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script src="../Scripts/class.js"></script>
+    <script src="../Scripts/mustache.js"></script>
+    <script src="../Scripts/jquery-2.0.3.js"></script>
+</head>
+<body>
+    <div id="content"></div>
+    <hr />
+    <h2>Student's marks:(click each student's name to see his/her marks)</h2>
+    <div id="marks"></div>
+
+  <!--  ------------------PERSISTER------------------->
+    <script>
+        var httpRequester = (function () {
+            function getRequest(url, success, error) {
+                $.ajax({
+                    url: url,
+                    type: "GET",
+                    contentType: "application/json",
+                    timeout: 5000,
+                    success: success,
+                    error: error
+                })
+            }
+
+            return {
+                makeGetRequest: getRequest
+            }
+        }());
+
+    </script>
+
+      <!--  ------------------CONTROLS------------------->
+    <script>
+        var controls = controls || {};
+        (function (c) {
+            var TableView = Class.create({
+                init: function (itemsSource) {
+                    if (!(itemsSource instanceof Array)) {
+                        throw "The itemsSource of a ListView must be an array!";
+                    }
+                    this.itemsSource = itemsSource;
+                },
+                render: function (template) {
+                    var table = document.createElement("table");
+
+                    var tbody = document.createElement("tbody");
+
+                    var thead = document.createElement("tr");
+
+                    thead.innerHTML += "<td>First Name</td><td>LastName</td><td>Age</td><td>Grade</td>";
+
+                    tbody.appendChild(thead);
+                    //console.log(this.itemsSource);
+                    
+                    for (var i = 0; i < this.itemsSource.length; i++) {
+                        var item = this.itemsSource[i];
+
+                        var currentTr = document.createElement("tr");
+
+                        currentTr.innerHTML += template(item);
+
+                        tbody.appendChild(currentTr);
+                    }
+
+                    table.appendChild(tbody);
+                    return table.outerHTML;
+                }
+            });
+
+            var MarkView = Class.create({
+                init: function (itemsSource) {
+                    if (!(itemsSource instanceof Array)) {
+                        throw "The itemsSource of a ListView must be an array!";
+                    }
+                    this.itemsSource = itemsSource;
+                },
+                render: function (template) {
+                    var ul = document.createElement("ul");
+                    
+                    for (var i = 0; i < this.itemsSource.length; i++) {
+                        var content = this.itemsSource[i];
+
+                        ul.innerHTML += template(content);
+                    }
+
+                    return ul.outerHTML;
+                }
+            });
+
+            c.getTableView = function (itemsSource) {
+                return new TableView(itemsSource);
+            },
+            c.getMarks = function(itemsSource) {
+                return new MarkView(itemsSource);
+            }
+        }(controls || {}));
+
+    </script>
+
+
+      <!--  ------------------TEMPLATE------------------->
+     <script type="x-mustache-template" id="student-template">	
+         <td>{{FirstName}}</td>
+         <td>{{LastName}}</td>
+         <td>{{Grade}}</td>
+         <td>{{Age}}</td>
+	</script>
+
+    <script type="x-mustache-template" id="mark-template">	
+        <li>
+        {{Subject}} : {{Score}}
+        </li>
+	</script>
+
+      <!--  ------------------MAIN LOGIC------------------->
+    <script>
+         var Student = Class.create({
+	        init: function (fname, lname, grade, age, marks) {
+	            this.fname = fname;
+	            this.lname = lname;
+	            this.grade = grade;
+	            this.age = age;
+	            this.marks = marks;
+	        }
+	    });
+
+	    var Mark = Class.create({
+	        init: function (subject, score) {
+	            this.subject = subject;
+	            this.score = score;
+	        }
+	    });
+
+	    var query = httpRequester.makeGetRequest("http://localhost:35393/api/student",
+            function (students) { //success
+                var personTemplate = Mustache.compile(document.getElementById("student-template").innerHTML);
+
+                var listView = controls.getTableView(students);
+
+                var listViewHtml = listView.render(personTemplate);
+
+                document.getElementById("content").innerHTML = listViewHtml;
+
+                $('tr').on('click', 'td', function (ev) {
+                    var marksQuery = httpRequester.makeGetRequest(
+                        "http://localhost:35393/api/student/" + ev.target.textContent,
+                        function (data) {//success
+                            var markTemplate = Mustache.compile(document.getElementById("mark-template").innerHTML);
+                            var markView = controls.getMarks(data);
+                            var markViewHtml = markView.render(markTemplate);
+                            $('#marks').html(markViewHtml);
+                        }, function (err) {//error
+                        })
+                });
+            });
+    </script>
+
+</body>
+</html>
