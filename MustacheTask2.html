@@ -118,22 +118,6 @@
 
       <!--  ------------------MAIN LOGIC------------------->
     <script>
-         var Student = Class.create({
-	        init: function (fname, lname, grade, age, marks) {
-	            this.fname = fname;
-	            this.lname = lname;
-	            this.grade = grade;
-	            this.age = age;
-	            this.marks = marks;
-	        }
-	    });
-
-	    var Mark = Class.create({
-	        init: function (subject, score) {
-	            this.subject = subject;
-	            this.score = score;
-	        }
-	    });
 
 	    var query = httpRequester.makeGetRequest("http://localhost:35393/api/student",
             function (students) { //success
